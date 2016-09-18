@@ -5,6 +5,7 @@
             [ring.middleware.edn :as edn]
             [clojure.core.server]
             [cuerdas.core :as str]
+            [io.aviso.ansi :as ansi]
             [org.httpkit.server :as server])
   (:gen-class))
 
@@ -30,7 +31,7 @@
   (prn e))
 
 (defmethod prn-event :syslog [{:keys [msg]}]
-  (println (prune msg)))
+  (println (ansi/blue (prune msg))))
 
 (def rex #"^\S+ \S+ \S+ \S+ (\S+)\[\d*\]:? (?:<Notice>: )(.*)$")
 

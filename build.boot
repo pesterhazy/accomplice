@@ -8,6 +8,7 @@
                             [http-kit "2.1.18"]
                             [funcool/cuerdas "1.0.1"]
                             [fogus/ring-edn "0.3.0"]
+                            [io.aviso/pretty "0.1.30"]
                             [adzerk/boot-test "RELEASE" :scope "test"]])
 
 (task-options!
