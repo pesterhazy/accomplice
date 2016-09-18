@@ -17,9 +17,30 @@
   (assert (vector? v))
   (subvec v (max 0 (- (count v) n))))
 
-(defn prn-event [e]
-  (prn (cond-> e
-         (:line e) (update :line #(str/prune % 70)))))
+(def width 100)
+
+(defn prune [s] (str/prune s 100))
+
+(defn redact [e]
+  (cond-> e (:line e) (update :line prune)))
+
+(defmulti prn-event :type)
+
+(defmethod prn-event :default [e]
+  (prn e))
+
+(defmethod prn-event :syslog [{:keys [msg]}]
+  (println (prune msg)))
+
+(def rex #"^\S+ \S+ \S+ \S+ (\S+)\[\d*\]:? (?:<Notice>: )(.*)$")
+
+(defn transform-syslog [{:keys [line] :as ev}]
+  (if-let [[_ prog msg] (some->> line (re-matches rex))]
+    (assoc ev
+           :type :syslog
+           :prog prog
+           :msg msg)
+    ev))
 
 ;; log
 
@@ -55,8 +76,17 @@
   (->> log
        :events
        deref
-       (filter (comp #(clojure.string/includes? % term) :line))
+       (filter #(some-> % :line (clojure.string/includes? term)))
        (map prn-event)
+       dorun))
+
+(defn search-prog [log prog]
+  (->> log
+       :events
+       deref
+       (filter (comp #{prog} :prog))
+       (map :msg)
+       (map (comp println #(str/prune % width)))
        dorun))
 
 (defn make-log []
@@ -64,18 +94,15 @@
         publication (pub c topic)]
     (->Log (atom []) c publication)))
 
+(defn ingest! [log event]
+  (->> event
+       transform-syslog
+       (append! log)))
+
 (defonce !log (atom (make-log)))
 
-(defn annoy []
-  (loop [n 0]
-    (println "Appending..." n)
-    (append! @!log n)
-    (println "Sleeping...")
-    (Thread/sleep 1000)
-    (recur (inc n))))
-
 (defn event! [event]
-  (append! @!log event)
+  (ingest! @!log event)
   {:status 200})
 
 (defn handle [{:keys [uri request-method params] :as request}]
@@ -96,7 +123,7 @@
 (defn telnet []
   (loop []
     (when-let [line (read-line)]
-      (append! @!log {:line line})
+      (ingest! @!log {:line line})
       (recur))))
 
 (def !telnetserver-running? (atom false))
