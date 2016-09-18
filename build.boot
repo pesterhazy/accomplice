@@ -6,6 +6,7 @@
           :dependencies   '[[org.clojure/clojure "1.9.0-alpha12"]
                             [org.clojure/core.async "0.2.391"]
                             [http-kit "2.1.18"]
+                            [funcool/cuerdas "1.0.1"]
                             [fogus/ring-edn "0.3.0"]
                             [adzerk/boot-test "RELEASE" :scope "test"]])
 
