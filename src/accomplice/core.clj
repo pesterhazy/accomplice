@@ -3,8 +3,12 @@
                                         go-loop <!
                                         pub sub unsub]]
             [ring.middleware.edn :as edn]
+            [clojure.core.server]
             [org.httpkit.server :as server])
   (:gen-class))
+
+(def web-port 8228)
+(def telnet-port 8229)
 
 (defn topic [v]
   :all)
@@ -58,12 +62,29 @@
 
 (defonce !server (atom nil))
 
-(defn start-server []
+(defn start-webserver []
   (when @!server
     (@!server))
-  (reset! !server (server/run-server (wrap #'handle) {:port 8228})))
+  (reset! !server (server/run-server (wrap #'handle) {:port web-port})))
 
-(defonce _server (start-server))
+(defonce _webserver (start-webserver))
+
+(defn telnet []
+  (loop []
+    (when-let [line (read-line)]
+      (append! !log {:line line})
+      (recur))))
+
+(defn start-telnetserver []
+  (clojure.core.server/start-server {:name "telnet-json" :accept 'accomplice.core/telnet :port telnet-port })
+  )
+
+(defonce _telnetserver
+  (start-telnetserver))
+
+(defn serve []
+  (start-webserver)
+  (start-telnetserver))
 
 (defn -main
   "I don't do a whole lot ... yet."

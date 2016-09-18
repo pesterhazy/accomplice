@@ -3,7 +3,7 @@
 
 (set-env! :resource-paths #{"resources" "src"}
           :source-paths   #{"test"}
-          :dependencies   '[[org.clojure/clojure "RELEASE"]
+          :dependencies   '[[org.clojure/clojure "1.9.0-alpha12"]
                             [org.clojure/core.async "0.2.391"]
                             [http-kit "2.1.18"]
                             [fogus/ring-edn "0.3.0"]
@@ -33,5 +33,10 @@
   [a args ARG [str] "the arguments for the application."]
   (require '[accomplice.core :as app])
   (apply (resolve 'app/-main) args))
+
+(deftask serve
+  []
+  (future (require '[accomplice.core :as app])
+          ((resolve 'app/serve))))
 
 (require '[adzerk.boot-test :refer [test]])
