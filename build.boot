@@ -4,9 +4,11 @@
 (set-env! :resource-paths #{"resources" "src"}
           :source-paths   #{"test"}
           :dependencies   '[[org.clojure/clojure "RELEASE"]
+                            [org.clojure/core.async "0.2.391"]
                             [adzerk/boot-test "RELEASE" :scope "test"]])
 
 (task-options!
+ repl {:init-ns 'accomplice.core}
  aot {:namespace   #{'accomplice.core}}
  pom {:project     project
       :version     version
