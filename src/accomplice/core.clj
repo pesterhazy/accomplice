@@ -10,6 +10,14 @@
 (def web-port 8228)
 (def telnet-port 8229)
 
+;; utility
+
+(defn vec-take-last [v n]
+  (assert (vector? v))
+  (subvec v (max 0 (- (count v) n))))
+
+;; log
+
 (defn topic [v]
   :all)
 
@@ -33,23 +41,27 @@
         (finally
           (unsub publication :all subscriber))))))
 
+(defn tail [log]
+  (doseq [event (vec-take-last @(:events log) 10)]
+    (prn event)))
+
 (defn make-log []
   (let [c (chan)
         publication (pub c topic)]
     (->Log (atom []) c publication)))
 
-(def !log (make-log))
+(defonce !log (atom (make-log)))
 
 (defn annoy []
   (loop [n 0]
     (println "Appending..." n)
-    (append! !log n)
+    (append! @!log n)
     (println "Sleeping...")
     (Thread/sleep 1000)
     (recur (inc n))))
 
 (defn event! [event]
-  (append! !log event)
+  (append! @!log event)
   {:status 200})
 
 (defn handle [{:keys [uri request-method params] :as request}]
@@ -72,7 +84,7 @@
 (defn telnet []
   (loop []
     (when-let [line (read-line)]
-      (append! !log {:line line})
+      (append! @!log {:line line})
       (recur))))
 
 (defn start-telnetserver []
