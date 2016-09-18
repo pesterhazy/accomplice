@@ -5,6 +5,8 @@
           :source-paths   #{"test"}
           :dependencies   '[[org.clojure/clojure "RELEASE"]
                             [org.clojure/core.async "0.2.391"]
+                            [http-kit "2.1.18"]
+                            [fogus/ring-edn "0.3.0"]
                             [adzerk/boot-test "RELEASE" :scope "test"]])
 
 (task-options!

@@ -1,7 +1,9 @@
 (ns accomplice.core
   (:require [clojure.core.async :refer [chan >!! <!!
                                         go-loop <!
-                                        pub sub unsub]])
+                                        pub sub unsub]]
+            [ring.middleware.edn :as edn]
+            [org.httpkit.server :as server])
   (:gen-class))
 
 (defn topic [v]
@@ -25,7 +27,6 @@
             (prn v))
           (recur))
         (finally
-          (println "Cleaning up...")
           (unsub publication :all subscriber))))))
 
 (defn make-log []
@@ -42,6 +43,27 @@
     (println "Sleeping...")
     (Thread/sleep 1000)
     (recur (inc n))))
+
+(defn event! [event]
+  (append! !log event)
+  {:status 200})
+
+(defn handle [{:keys [uri request-method params] :as request}]
+  (case [uri request-method]
+    ["/event" :post] (event! params)))
+
+(defn wrap [handler]
+  (-> handler
+      edn/wrap-edn-params))
+
+(defonce !server (atom nil))
+
+(defn start-server []
+  (when @!server
+    (@!server))
+  (reset! !server (server/run-server (wrap #'handle) {:port 8228})))
+
+(defonce _server (start-server))
 
 (defn -main
   "I don't do a whole lot ... yet."
